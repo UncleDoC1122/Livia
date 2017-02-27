@@ -17,7 +17,7 @@ namespace LVDownloader
         static void Main(string[] args)
         {
 
-            List<string> Vals = reader("D:\\Users\\DSIYANCHEV\\Downloads\\Telegram Desktop\\input_formatted.csv"); // список всех регистрационных номеров, очищенный
+            List<string> Vals = reader("C:\\Users\\User\\Downloads\\Telegram Desktop\\input_formatted.csv"); // список всех регистрационных номеров, очищенный
             //List<string> ValsError = reader("D:\\Users\\DSIYANCHEV\\Downloads\\Telegram Desktop\\input_full.csv"); // список всех регистрационных номеров, неочищенный 
 
             List<List<string>> output = new List<List<string>>();
@@ -44,7 +44,7 @@ namespace LVDownloader
                 ReadOnlyCollection<IWebElement> ListTD = DriverChrome.FindElements(By.TagName("td"));
 
 
-                if (ListTD[0].Text.Equals("Network Error (tcp_error)")) // вылетела ошибка TCP(сервер перегружен)
+                if (ListTD.Count > 0 && ListTD[0].Text.Equals("Network Error (tcp_error)")) // вылетела ошибка TCP(сервер перегружен)
                 {
                     statisticsCount++;
                     i--;
@@ -109,11 +109,21 @@ namespace LVDownloader
 
                         match = NDS.Match(ListTD[j].Text);
                         matches.Add(match.Value.ToString());
+                        bool regFlag = false;
 
                         switch (ListTD[j].Text)
                         {
                             case "Название":
-                                Name = ListTD[++j].Text;
+                                string tmp5 = ListTD[++j].Text;
+                                int Position = tmp5.IndexOf('П');
+                                if (Position == -1)
+                                {
+                                    Name = tmp5;
+                                }
+                                else
+                                {
+                                    Name = tmp5.Substring(0, Position);
+                                }
                                 break;
                             case "Данные из реестра плательщиков НДС":
                                 string tmp4 = ListTD[++j].Text;
@@ -136,17 +146,18 @@ namespace LVDownloader
                                 break;
                             case "Юридический адрес":
                                 string tmp2 = ListTD[++j].Text;
-                                int Position = tmp2.IndexOf('П');
-                                if (Position == -1)
+                                int Position2 = tmp2.IndexOf('П');
+                                if (Position2 == -1)
                                 {
                                     Address = tmp2;
                                 }
                                 else
                                 {
-                                    Address = tmp2.Substring(0, tmp2.Length - 1 - Position);
+                                    Address = tmp2.Substring(0, Position2);
                                 }
                                 break;
                             case "Регистрационное удостоверение":
+                                regFlag = true;
                                 string[] tmp3 = ListTD[++j].Text.Split(' ');
                                 RegisterNo = tmp3[0] + " " + tmp3[1];
                                 RegisterDate = tmp3[2];
@@ -155,6 +166,12 @@ namespace LVDownloader
                                 LastUpdate = ListTD[++j].Text;
                                 break;
                         }
+                        if (!regFlag)
+                        {
+                            RegisterNo = "-";
+                            RegisterDate = "-";
+                        }
+
                     }
 
                     for (int j = 0; j < matches.Count; j ++)
@@ -174,6 +191,8 @@ namespace LVDownloader
 
                     ReadOnlyCollection<IWebElement> ListPhones = DriverChrome.FindElements(By.ClassName("vizitka_contact_phone"));
                     IWebElement Web = DriverChrome.FindElement(By.ClassName("vizitka_contact_web"));
+
+
 
 
 
