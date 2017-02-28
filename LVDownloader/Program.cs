@@ -17,7 +17,7 @@ namespace LVDownloader
         static void Main(string[] args)
         {
 
-            List<string> Vals = reader("C:\\Users\\User\\Downloads\\Telegram Desktop\\input_formatted.csv"); // список всех регистрационных номеров, очищенный
+            List<string> Vals = reader("D:\\Users\\DSIYANCHEV\\Downloads\\Telegram Desktop\\input_formatted.csv"); // список всех регистрационных номеров, очищенный
             //List<string> ValsError = reader("D:\\Users\\DSIYANCHEV\\Downloads\\Telegram Desktop\\input_full.csv"); // список всех регистрационных номеров, неочищенный 
 
             List<List<string>> output = new List<List<string>>();
@@ -192,9 +192,43 @@ namespace LVDownloader
                     ReadOnlyCollection<IWebElement> ListPhones = DriverChrome.FindElements(By.ClassName("vizitka_contact_phone"));
                     IWebElement Web = DriverChrome.FindElement(By.ClassName("vizitka_contact_web"));
 
+                    if (ListPhones[0].Text.IndexOf('+') == -1)
+                    {
+                        Phone = "-";
+                    }
+                    else
+                    {
+                        Phone = ListPhones[0].Text.Substring(ListPhones[0].Text.IndexOf('+'));
+                    }
 
+                    if (ListPhones[1].Text.IndexOf('+') == -1)
+                    {
+                        Fax = "-";
+                    } 
+                    else
+                    {
+                        Fax = ListPhones[1].Text.Substring(ListPhones[1].Text.IndexOf('+'));
+                    }
 
+                    string[] Webs = Web.Text.Split('\n');
 
+                    if (Webs[0].Equals("Добавь адрес сайта\r"))
+                    {
+                        Website = "-";
+                    }
+                    else
+                    {
+                        Website = Webs[0];
+                    }
+
+                    if (Webs[1].Equals("Добавь адрес эл. почты"))
+                    {
+                        Fax = "-";
+                    }
+                    else
+                    {
+                        Fax = Webs[1];
+                    }
 
                 }
 
