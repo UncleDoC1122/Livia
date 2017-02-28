@@ -17,7 +17,7 @@ namespace LVDownloader
         static void Main(string[] args)
         {
 
-            List<string> Vals = reader("D:\\Users\\DSIYANCHEV\\Downloads\\Telegram Desktop\\input_formatted.csv"); // список всех регистрационных номеров, очищенный
+            List<string> Vals = reader("C:\\Users\\User\\Downloads\\Telegram Desktop\\input_formatted.csv"); // список всех регистрационных номеров, очищенный
             //List<string> ValsError = reader("D:\\Users\\DSIYANCHEV\\Downloads\\Telegram Desktop\\input_full.csv"); // список всех регистрационных номеров, неочищенный 
 
             List<List<string>> output = new List<List<string>>();
@@ -78,7 +78,8 @@ namespace LVDownloader
                 else // найдено
                 {
                     statistics.Add(statisticsCount);
-                    string Name, OrgForm, RegNum, RegDate, Sepa, NDSNum, IsActual, Address, RegisterNo, RegisterDate, LastUpdate, Website, Email, Phone, Fax;
+                    string Name = "", OrgForm = "", RegNum = "", RegDate = "", Sepa = "", NDSNum = "", 
+                        IsActual = "", Address = "", RegisterNo = "", RegisterDate = "", LastUpdate = "", Website = "", Email = "", Phone = "", Fax = "", IsFound = "true";
                     Regex NDS = new Regex("LV\\d{8,15}");
                     Match match;
 
@@ -104,12 +105,13 @@ namespace LVDownloader
                         IsActual = "-";
                     }
                     List<string> matches = new List<string>();
+                    bool regFlag = false;
                     for (int j = 0; j < ListTD.Count; j++)
                     {
 
                         match = NDS.Match(ListTD[j].Text);
                         matches.Add(match.Value.ToString());
-                        bool regFlag = false;
+                        
 
                         switch (ListTD[j].Text)
                         {
@@ -178,7 +180,8 @@ namespace LVDownloader
                     {
                         if (!matches[j].Equals(""))
                         {
-                            NDSNum = matches[i];
+                            NDSNum = matches[j];
+                            break;
                         }
 
                         if (j == matches.Count - 1)
@@ -214,25 +217,26 @@ namespace LVDownloader
 
                     if (Webs[0].Equals("Добавь адрес сайта\r"))
                     {
-                        Website = "-";
+                        Email = "-";
                     }
                     else
                     {
-                        Website = Webs[0];
+                        Email = Webs[0];
                     }
 
                     if (Webs[1].Equals("Добавь адрес эл. почты"))
                     {
-                        Fax = "-";
+                        Website = "-";
                     }
                     else
                     {
-                        Fax = Webs[1];
+                        Website = Webs[1];
                     }
 
+                    
                 }
 
-
+                
 
 
             }
