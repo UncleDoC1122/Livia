@@ -8,6 +8,8 @@ using OpenQA.Selenium.Support.UI;
 using System.IO;
 using System.Collections.ObjectModel;
 using System.Text.RegularExpressions;
+using System.Xml;
+using Excel = Microsoft.Office.Interop.Excel;
 
 namespace LVDownloader
 {
@@ -17,13 +19,19 @@ namespace LVDownloader
         static void Main(string[] args)
         {
 
-            List<string> Vals = reader("C:\\Users\\User\\Downloads\\Telegram Desktop\\input_formatted.csv"); // список всех регистрационных номеров, очищенный
+            List<string> Vals = reader("D:\\Users\\DSIYANCHEV\\Telegram Desktop\\input_formatted.csv"); // список всех регистрационных номеров, очищенный
             //List<string> ValsError = reader("D:\\Users\\DSIYANCHEV\\Downloads\\Telegram Desktop\\input_full.csv"); // список всех регистрационных номеров, неочищенный 
 
             List<List<string>> output = new List<List<string>>();
 
+            XmlDocument MainDoc = new XmlDocument();
+            XmlTextWriter Writer = new XmlTextWriter("D:\\Users\\DSIYANCHEV\\Telegram Desktop\\output.xml", Encoding.UTF8);
+            Writer.WriteStartDocument();
+            Writer.WriteStartElement("head");
+            Writer.WriteEndElement();
+            Writer.Close();
 
-
+            MainDoc.Load("D:\\Users\\DSIYANCHEV\\Telegram Desktop\\output.xml");
 
 
             string urlMain = "http://company.lursoft.lv/ru/"; // основная часть ссылки, к ней будут добавляться регистрационные номера
@@ -78,7 +86,7 @@ namespace LVDownloader
                 else // найдено
                 {
                     statistics.Add(statisticsCount);
-                    string Name = "", OrgForm = "", RegNum = "", RegDate = "", Sepa = "", NDSNum = "", 
+                    string Name = "", OrgForm = "", RegNum = "", RegDate = "", Sepa = "", NDSNum = "",
                         IsActual = "", Address = "", RegisterNo = "", RegisterDate = "", LastUpdate = "", Website = "", Email = "", Phone = "", Fax = "", IsFound = "true";
                     Regex NDS = new Regex("LV\\d{8,15}");
                     Match match;
@@ -111,7 +119,7 @@ namespace LVDownloader
 
                         match = NDS.Match(ListTD[j].Text);
                         matches.Add(match.Value.ToString());
-                        
+
 
                         switch (ListTD[j].Text)
                         {
@@ -126,6 +134,8 @@ namespace LVDownloader
                                 {
                                     Name = tmp5.Substring(0, Position);
                                 }
+                                Name = Name.Replace('\n', ' ');
+
                                 break;
                             case "Данные из реестра плательщиков НДС":
                                 string tmp4 = ListTD[++j].Text;
@@ -157,6 +167,7 @@ namespace LVDownloader
                                 {
                                     Address = tmp2.Substring(0, Position2);
                                 }
+                                Address.Replace('\n', ' ');
                                 break;
                             case "Регистрационное удостоверение":
                                 regFlag = true;
@@ -176,7 +187,7 @@ namespace LVDownloader
 
                     }
 
-                    for (int j = 0; j < matches.Count; j ++)
+                    for (int j = 0; j < matches.Count; j++)
                     {
                         if (!matches[j].Equals(""))
                         {
@@ -207,7 +218,7 @@ namespace LVDownloader
                     if (ListPhones[1].Text.IndexOf('+') == -1)
                     {
                         Fax = "-";
-                    } 
+                    }
                     else
                     {
                         Fax = ListPhones[1].Text.Substring(ListPhones[1].Text.IndexOf('+'));
@@ -233,45 +244,133 @@ namespace LVDownloader
                         Website = Webs[1];
                     }
 
-                    
+                    List<string> CurrentList = new List<string>();
+
+                    CurrentList.Add(i.ToString());          // RecordID
+                    CurrentList.Add(Name);                  // Name
+                    CurrentList.Add(OrgForm);               // OrgForm
+                    CurrentList.Add(RegNum);                // RegNum
+                    CurrentList.Add(RegDate);               // RegDate
+                    CurrentList.Add(Sepa);                  // SEPA
+                    CurrentList.Add(NDSNum);                // NDSNum
+                    CurrentList.Add(IsActual);              // IsActual
+                    CurrentList.Add(Address);               // Address
+                    CurrentList.Add(RegisterNo);            // RegisterNo
+                    CurrentList.Add(RegisterDate);          // RegisterDate
+                    CurrentList.Add(LastUpdate);            // LastUpdate
+                    CurrentList.Add(Website);               // Website
+                    CurrentList.Add(Email);                 // Email
+                    CurrentList.Add(Phone);                 // Phone
+                    CurrentList.Add(Fax);                   // Fax
+                    CurrentList.Add(IsFound);               // IsFound
+
+                    output.Add(CurrentList);
                 }
-
-                
-
-
             }
 
-            //IWebDriver Browser = new OpenQA.Selenium.Chrome.ChromeDriver();
-            //Browser.Navigate().GoToUrl("http://company.lursoft.lv/ru/50003291221");
+            Excel.Application ExcelApp;
+            ExcelApp = new Excel.Application();
+            ExcelApp.Visible = true;
+            ExcelApp.SheetsInNewWorkbook = 1;
+            ExcelApp.Workbooks.Add(Type.Missing);
 
-            //System.Collections.ObjectModel.ReadOnlyCollection<IWebElement> list = Browser.FindElements(By.TagName("td"));
+            Excel.Workbooks WorkBooks = ExcelApp.Workbooks;
+            Excel.Workbook Workbook = WorkBooks[1];
+            Excel.Sheets ExcelSheets = Workbook.Worksheets;
+            Excel.Worksheet CurrentSheet = (Excel.Worksheet)ExcelSheets.get_Item(1);
 
-            //ReadOnlyCollection<IWebElement> ListImg = Browser.FindElements(By.TagName("img"));
+            Excel.Range cell;
+            cell = CurrentSheet.get_Range("A1", Type.Missing);
+            cell = cell.get_Offset(1, 0);
 
-            //for (int j = 0; j < ListImg.Count; j++)
-            //{
-            //    Console.WriteLine(ListImg[j].GetAttribute("alt"));
-            //    if (ListImg[j].Text == "Активный")
-            //    {
-            //        Console.WriteLine("Science, beach!");
-            //    }
-            //}
+            for (int i = 0; i < output.Count; i++)
+            {
+                for (int j = 0; j < output[i].Count; j++)
+                {
+                    cell.Value2 = output[i][j];
+                    cell = cell.get_Offset(0, 1);
+                }
+                cell = cell.get_Offset(1, 0);
+            }
+
+            for (int i = 0; i < output.Count; i++)
+            {
+                XmlNode Element = MainDoc.CreateElement("BusinessPartner");
+                MainDoc.DocumentElement.AppendChild(Element);
+
+                XmlNode RecordID = MainDoc.CreateElement("RecordID");
+                RecordID.InnerText = output[i][0];
+                Element.AppendChild(RecordID);
+
+                XmlNode Name = MainDoc.CreateElement("Name");
+                Name.InnerText = output[i][1];
+                Element.AppendChild(Name);
+
+                XmlNode OrgForm = MainDoc.CreateElement("OrgForm");
+                OrgForm.InnerText = output[i][2];
+                Element.AppendChild(OrgForm);
+
+                XmlNode RegNum = MainDoc.CreateElement("RegNum");
+                RegNum.InnerText = output[i][3];
+                Element.AppendChild(RegNum);
+
+                XmlNode RegDate = MainDoc.CreateElement("RegDate");
+                RegDate.InnerText = output[i][4];
+                Element.AppendChild(RegDate);
+
+                XmlNode Sepa = MainDoc.CreateElement("Sepa");
+                Sepa.InnerText = output[i][5];
+                Element.AppendChild(Sepa);
+
+                XmlNode NDSNum = MainDoc.CreateElement("NDSNum");
+                NDSNum.InnerText = output[i][6];
+                Element.AppendChild(NDSNum);
+
+                XmlNode IsActual = MainDoc.CreateElement("IsActual");
+                IsActual.InnerText = output[i][7];
+                Element.AppendChild(IsActual);
+
+                XmlNode Address = MainDoc.CreateElement("Address");
+                Address.InnerText = output[i][8];
+                Element.AppendChild(Address);
+
+                XmlNode RegisterNo = MainDoc.CreateElement("RegisterNo");
+                RegisterNo.InnerText = output[i][9];
+                Element.AppendChild(RegisterNo);
+
+                XmlNode RegisterDate = MainDoc.CreateElement("RegisterDate");
+                RegisterDate.InnerText = output[i][10];
+                Element.AppendChild(RegisterDate);
+
+                XmlNode LastUpdate = MainDoc.CreateElement("LastUpdate");
+                LastUpdate.InnerText = output[i][11];
+                Element.AppendChild(LastUpdate);
+
+                XmlNode Website = MainDoc.CreateElement("Website");
+                Website.InnerText = output[i][12];
+                Element.AppendChild(Website);
+
+                XmlNode Email = MainDoc.CreateElement("Email");
+                Email.InnerText = output[i][13];
+                Element.AppendChild(Email);
+
+                XmlNode Phone = MainDoc.CreateElement("Phone");
+                Phone.InnerText = output[i][14];
+                Element.AppendChild(Phone);
+
+                XmlNode Fax = MainDoc.CreateElement("Fax");
+                Fax.InnerText = output[i][15];
+                Element.AppendChild(Fax);
+
+                XmlNode IsFound = MainDoc.CreateElement("IsFound");
+                IsFound.InnerText = output[i][16];
+                Element.AppendChild(IsFound);
+            }
+
+            MainDoc.Save("D:\\Users\\DSIYANCHEV\\Telegram Desktop\\output.xml");
 
 
-            //Browser.Manage().Timeouts().PageLoad = new TimeSpan(0, 1, 0);
-            //for (int i = 0; i < list.Count; i++)
-            //{
-            //    Console.WriteLine(i.ToString() + " " + list[i].Text);
-            //}
 
-            //Console.WriteLine("---");
-
-            //Browser.SwitchTo().Frame(0);
-
-            //IWebElement element = Browser.FindElement(By.ClassName("vizitka_contact_phone"));
-
-            //Console.WriteLine(element.Text);
-            //Console.ReadKey();
         }
 
         private static List<string> reader(string path)
